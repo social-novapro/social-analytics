@@ -7,11 +7,15 @@
     "react",
     "starter"
   ],
-  "main": "src/index.tsx",
+  "main": "src/graphs/callsPerUser/index.tsx",
   "dependencies": {
+    "axios": "^0.26.1",
+    "chart.js": "^3.7.1",
     "function-plot": "^1.22.7",
     "react": "^17.0.2",
+    "react-chartjs-2": "^4.0.1",
     "react-dom": "^17.0.2",
+    "react-function-plot": "^0.0.14",
     "react-router-dom": "^6.2.2",
     "react-scripts": "^5.0.0"
   },
@@ -19,7 +23,7 @@
     "typescript": "3.7.5"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "PORT=5500 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
