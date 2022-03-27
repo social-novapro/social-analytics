@@ -2,6 +2,7 @@ import { Routes, Route, Link } from 'react-router-dom'
 import MainView from './views/mainView';
 import Function1View from './graphs/Function1View';
 import Function2View from './graphs/Function2View';
+import Function3View from './graphs/Function3View';
 import { useEffect, useState } from "react";
 import stats from './stats.json'
 
@@ -10,7 +11,6 @@ const runtime = "dev" // "prod" || "dev" || "test"
 function App() {
     useEffect(() => {
         const fetchPrices = async () => {
-        
             var data 
             
             if (runtime === "prod") {
@@ -47,10 +47,11 @@ function App() {
         
             const functionNumber1 = await buildFunction1(data);
             const functionNumber2 = await buildFunction2(data);
-          
+            const functionNumber3 = await buildFunction3(data);
             const functionData = {
                 functionNumber1,
                 functionNumber2,
+                functionNumber3,
                 ready: true
             }
 
@@ -66,21 +67,18 @@ function App() {
             <div>
                 <div className='nav'> 
                     <Link className='buttonStyled' to="/">Home</Link>
-                    <Link className='buttonStyled' to="/1">Connections per user</Link>
-                    <Link className='buttonStyled' to="/2">Connections per day</Link>
-                    <p>current runtime: {runtime}</p>
+                    <Link className='buttonStyled' to="/1">Connections / User</Link>
+                    <Link className='buttonStyled' to="/2">Connections / Day</Link>
+                    <Link className='buttonStyled' to="/3">Connections / User / Day</Link>
+                    <p>Interact Analytics</p>
                 </div>
             </div>
             <div className='mainBody'>
-                <div className='App'>
-                    <h1>Interact Analytics</h1>
-                </div>
-                    
                 <Routes>  
-
-                    <Route path='/' exact={ true } element={ <MainView /> } />
+                    <Route path='/' exact={ true } element={ <MainView runtime={runtime} /> } />
                     <Route path='/1' exact={ true } element={ <Function1View chartData={chartData}/> } />
                     <Route path='/2' exact={ true } element={ <Function2View chartData={chartData}/> } />
+                    <Route path='/3' exact={ true } element={ <Function3View chartData={chartData}/> } />
                 </Routes>
             </div>
             
@@ -115,7 +113,17 @@ function getTimeOneWeek() {
     const dateNowLayout = getDayLayout(currentTime)
     const oneWeekAgoLayout = dateNowLayout - 7
     return oneWeekAgoLayout
+};
+function getTimeDaysAgo(days) {
+    const d = new Date();
+    const currentTime = d.getTime();
 
+
+    const oneDay = 86400000
+    
+    const amountDays = oneDay * days
+    const amountDaysAgo = currentTime - amountDays
+    return amountDaysAgo
 };
 function getDayLayout(date) {
     var d = new Date(Number(date))
@@ -140,19 +148,21 @@ functions
 1: bar: Connections per User
     x: user
     y: number of connections
-2: bar: Connections per Day
-    x: day
+2: bar: Connections per Day total
+    x: days
     y: uses
-3: line
+3: line: Connections per User per Day
+    x: days
+    y: number of connections
+4: line
     x: time
     y: number of connections
-4: bar
+5: bar
     x: url
     y: number of connections
-5: line
+6: line
     x: overtime
     y: time since last connection
-
 */
 
 async function buildFunction1(data) {
@@ -255,6 +265,129 @@ async function buildFunction2(data) {
         totalX,
         totalY,
         points: functionPointsXandY,
+        xDomain: [lowestx, highestx],
+        yDomain: [lowesty, highesty],
+    }
+
+    return functionData;
+}
+
+// connections per user per day | series of line graphs
+async function buildFunction3(data) {
+    var totalX = 0
+    var totalY = 0
+
+    var highestx = 0;
+    var lowestx = -1;
+    var highesty = 0;
+    var lowesty = -1;
+
+    var allUserStats = []
+
+    // x values day (march 25)
+        // y value user connections | person 1 (20 connections)
+        // y value  user connections | person 2 (5 connecitons)
+        // y value user connection | person 3 (24 connections)
+
+    // x value day (march 26)
+        // y value user conecntion | person 1 (2 connections)
+        // y value user connection | person 2 (4 connections)
+        // y value user connection | person 3 (0 connections)
+        
+    for (const stat of data) {
+        const oneWeekAgoLayout = getTimeOneWeek()
+    
+        var userConnectionsPerDay = {}
+        var userDays = {}
+        for (const connection of stat.userConnections) {
+            const day = getDayLayout(connection.timestamp)
+            
+    //      if (day < oneWeekAgoLayout) {
+    //          console.log('to old)
+    //      }
+    //      else {
+            userConnectionsPerDay[day] = userConnectionsPerDay[day] ? userConnectionsPerDay[day] + 1 : 1
+            userDays[day] = connection.timestamp
+    //      }
+        }
+
+        for (const perDay in userConnectionsPerDay) {
+            allUserStats.push({x: perDay, y: userConnectionsPerDay[perDay], time: userDays[perDay], user: stat._id})
+        }
+    }
+
+    var checkedUsers = {}
+
+    for (const userStat of allUserStats) {
+        if (!checkedUsers[userStat.user]) {
+            checkedUsers[userStat.user] = [userStat]
+        }
+        else {
+            checkedUsers[userStat.user].push(userStat)
+        }
+    }
+
+    var dataXs = []
+    var dataXsLayout = []
+    var dataYs = []
+    var YsLone = []
+
+    for (var i=7; i>-1; i--) {
+        const daysAgo = getTimeDaysAgo(i)
+        const dateParsed = getDateMonthDay(daysAgo)
+
+        const layoutDate = getDayLayout(daysAgo)
+        dataXsLayout.push(layoutDate)
+
+        dataXs.push(dateParsed)
+    }
+
+    var usersAmount = 0
+    var dataSets = []
+
+    for (const userStat in checkedUsers) {
+        usersAmount++
+        const stats = checkedUsers[userStat]
+
+        var current = {
+            fill: false,
+            pointRadius: 1,
+            borderColor: "rgba(255,0,0,0.5)",
+            label: `User ${usersAmount}`,
+            data: [ ],
+        }
+        var currentYs = []
+
+        for (const day of dataXsLayout) {
+            var found = false
+            for (const stat of stats) {
+                if (stat.x === day) {
+                    totalY += stat.y
+                    found = true
+                    dataSets.push({user: usersAmount, days: stat.x, connections: stat.y})
+                    current.data.push(stat.y)
+                    currentYs.push(stat.y)
+                }
+            }
+            if (!found) {
+                dataSets.push({user: usersAmount, days: day, connections: 0})
+                current.data.push(0)
+            }
+        }
+       
+        dataYs.push(current)
+        YsLone.push(currentYs)
+    }
+
+    var functionData = {
+        pointsXs: dataXs,
+        pointsYs: dataYs,
+        readyDataSets: {
+            dataXs,
+            YsLone,
+        },
+        totalX,
+        totalY,
         xDomain: [lowestx, highestx],
         yDomain: [lowesty, highesty],
     }

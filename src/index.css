@@ -67,7 +67,7 @@ p {
 }
 .mainBody {
     padding: 10px;
-    padding-top: 70px;
+    padding-top: 80px;
 
 }
 .buttonStyled {
@@ -94,4 +94,7 @@ hr.rounded {
     margin: 20px;
     margin-left: 20%; 
     margin-right: 20%; 
+}
+ul {
+    color: var(--main-p-color);
 }
