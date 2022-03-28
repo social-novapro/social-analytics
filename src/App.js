@@ -6,7 +6,7 @@ import Function3View from './graphs/Function3View';
 import { useEffect, useState } from "react";
 import stats from './stats.json'
 
-const runtime = "dev" // "prod" || "dev" || "test"
+const runtime = "prod" // "prod" || "dev" || "test"
 
 function App() {
     useEffect(() => {
@@ -14,17 +14,7 @@ function App() {
             var data 
             
             if (runtime === "prod") {
-                const res = await fetch(`https://interact-api.novapro.net/v1/get/analyticTrend/`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        "devtoken" : "33c4d102-9ece-4f8d-947a-ea1ab00e9081",
-                        "apptoken" : "2d4048d3-16f2-48d4-95f4-4ab6a43aac53",
-                        "accesstoken" : "489470ca-a0dc-47c8-b18d-657e7c841e53",
-                        "userid" : "92316f43-b782-428d-9fe0-df960f5dd267",
-                        "usertoken" : "6849268d-7819-4447-93da-767cd28e6251"
-                    },
-                })
+                const res = await fetch(`https://interact-api.novapro.net/v1/get/analyticTrend/`, { method: 'GET' })
                 data = await res.json();
             }
             else if (runtime === "dev") {
@@ -48,6 +38,7 @@ function App() {
             const functionNumber1 = await buildFunction1(data);
             const functionNumber2 = await buildFunction2(data);
             const functionNumber3 = await buildFunction3(data);
+            
             const functionData = {
                 functionNumber1,
                 functionNumber2,
