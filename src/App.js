@@ -3,6 +3,7 @@ import MainView from './views/mainView';
 import Function1View from './graphs/Function1View';
 import Function2View from './graphs/Function2View';
 import Function3View from './graphs/Function3View';
+import Function4View from './graphs/Function4View';
 import { useEffect, useState } from "react";
 import stats from './stats.json'
 
@@ -18,17 +19,7 @@ function App() {
                 data = await res.json();
             }
             else if (runtime === "dev") {
-                const res = await fetch(`http://localhost:5002/v1/get/analyticTrend/`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        "devtoken" : "33c4d102-9ece-4f8d-947a-ea1ab00e9081",
-                        "apptoken" : "2d4048d3-16f2-48d4-95f4-4ab6a43aac53",
-                        "accesstoken" : "384d90e0-f03e-408c-938a-3d87b15a18b7",
-                        "userid" : "6ceae342-2ca2-48ec-8ce3-0e39caebe989",
-                        "usertoken" : "9ef44898-6710-497c-a0de-9b9b4f6ad826"
-                    },
-                })
+                const res = await fetch(`http://localhost:5002/v1/get/analyticTrend/`, { method: 'GET' })
                 data = await res.json();
             }
             else {
@@ -38,11 +29,13 @@ function App() {
             const functionNumber1 = await buildFunction1(data);
             const functionNumber2 = await buildFunction2(data);
             const functionNumber3 = await buildFunction3(data);
-            
+            const functionNumber4 = await buildFunction4(data);
+
             const functionData = {
                 functionNumber1,
                 functionNumber2,
                 functionNumber3,
+                functionNumber4,
                 ready: true
             }
 
@@ -57,11 +50,7 @@ function App() {
         <div> 
             <div>
                 <div className='nav'> 
-                    <Link className='buttonStyled' to="/">Home</Link>
-                    <Link className='buttonStyled' to="/1">Connections / User</Link>
-                    <Link className='buttonStyled' to="/2">Connections / Day</Link>
-                    <Link className='buttonStyled' to="/3">Connections / User / Day</Link>
-                    <p>Interact Analytics</p>
+                    <Link className='buttonStyled' to="/">Interact Analytics</Link>
                 </div>
             </div>
             <div className='mainBody'>
@@ -70,6 +59,7 @@ function App() {
                     <Route path='/1' exact={ true } element={ <Function1View chartData={chartData}/> } />
                     <Route path='/2' exact={ true } element={ <Function2View chartData={chartData}/> } />
                     <Route path='/3' exact={ true } element={ <Function3View chartData={chartData}/> } />
+                    <Route path='/4' exact={ true } element={ <Function4View chartData={chartData}/> } />
                 </Routes>
             </div>
             
@@ -377,6 +367,69 @@ async function buildFunction3(data) {
             dataXs,
             YsLone,
         },
+        totalX,
+        totalY,
+        xDomain: [lowestx, highestx],
+        yDomain: [lowesty, highesty],
+    }
+
+    return functionData;
+}
+
+async function buildFunction4(data) {
+    var totalX = 0
+    var totalY = 0
+
+    var highestx = 0;
+    var lowestx = -1;
+    var highesty = 0;
+    var lowesty = -1;
+
+    var allUserStats = []
+
+    // x values day (march 25)
+        // y amount users that day | person 1 (20 connections)
+        
+    var amountX = {}
+    // { day1 : 2, day2: 4, day3: 1}
+    var timestamps = []
+
+    for (const stat of data) {
+
+        /*
+            ealieest thing for each user
+        */
+
+        var userEarliest = getDayLayout(stat.userConnections[0].timestamp)
+        amountX[userEarliest] = amountX[userEarliest] ? amountX[userEarliest] + 1 : 1
+        timestamps.push({userEarliest, timestamp: stat.userConnections[0].timestamp })
+    }
+
+
+    var pointsXs = []
+    var pointsYs = []
+    
+    var current = {
+        fill: false,
+        pointRadius: 1,
+        borderColor: "rgba(255,0,0,0.5)",
+        label: `First Connection of User`,
+        data: [ ],
+    }
+
+    for (const day in amountX) {
+        totalY+=amountX[day]
+        current.data.push(amountX[day])
+        const timestamp = timestamps.find(timestamp => timestamp.userEarliest === day).timestamp
+        const dateParsed = getDateMonthDay(timestamp)
+        pointsXs.push(dateParsed)
+    }
+
+    pointsYs.push(current)
+
+    var functionData = {
+        pointsXs,
+        pointsYs,
         totalX,
         totalY,
         xDomain: [lowestx, highestx],
