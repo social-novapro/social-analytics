@@ -114,6 +114,23 @@ function getDayLayout(date) {
     const year = d.getFullYear();
     return `${year}${month}${day}`
 } 
+// function getDayLayoutNew(date) {return getDayLayout(date)}
+function getDayLayoutNew(date) {
+    var d = new Date(Number(date))
+
+    const day = d.getDate();
+    const month = d.getMonth();
+    const year = d.getFullYear();
+
+    var monthReturn
+    if (month.toString().length==1) monthReturn = `0${month.toString()}`
+    else monthReturn = month.toString()
+    var dayReturn
+    if (day.toString().length==1) dayReturn = `0${day.toString()}`
+    else dayReturn = day.toString()
+
+    return `${year.toString()}${monthReturn}${dayReturn}`
+}
 function getDateMonthDay(date) {
     var d = new Date(Number(date))
 
@@ -217,7 +234,7 @@ async function buildFunction2(data) {
 
         
         for (const connection of stat.userConnections) {
-            const day = getDayLayout(connection.timestamp)
+            const day = getDayLayoutNew(connection.timestamp)
 
             if (day <  oneWeekAgoLayout) {
                // console.log(connection)
@@ -231,14 +248,23 @@ async function buildFunction2(data) {
         }
     }
 
-    for (const date in dates) {
-        totalX++
-        pointsXs.push(`${dates[date].timeDate}: ${dates[date].amount}`)
-        pointsYs.push(dates[date].amount)
-        functionPointsXandY.push([dates[date].timeDate, dates[date].amount])
+    var datesAll = []
+
+    for (var i=10; i>-1; i--) {
+        const daysAgo = getTimeDaysAgo(i)
+        const layoutDate = getDayLayoutNew(daysAgo)
+        console.log(dates[layoutDate])
+        if (!dates[layoutDate]) datesAll[layoutDate] = {amount: 0, timeDate: getDateMonthDay(daysAgo)}
+        else datesAll[layoutDate] = dates[layoutDate]
+        console.log(datesAll[layoutDate])
     }
-   // console.log(dates)
-        
+
+    for (const date in datesAll) {
+        totalX++
+        pointsXs.push(`${datesAll[date].timeDate}: ${datesAll[date].amount}`)
+        pointsYs.push(datesAll[date].amount)
+        functionPointsXandY.push([datesAll[date].timeDate, datesAll[date].amount])
+    }
   
     var functionData = {
         pointsXs,
@@ -313,7 +339,7 @@ async function buildFunction3(data) {
     var dataYs = []
     var YsLone = []
 
-    for (var i=7; i>-1; i--) {
+    for (var i=10; i>-1; i--) {
         const daysAgo = getTimeDaysAgo(i)
         const dateParsed = getDateMonthDay(daysAgo)
 
@@ -385,10 +411,9 @@ async function buildFunction4(data) {
     var highesty = 0;
     var lowesty = -1;
 
-    var allUserStats = []
 
     // x values day (march 25)
-        // y amount users that day | person 1 (20 connections)
+    // y amount users that day | person 1 (20 connections)
         
     var amountX = {}
     // { day1 : 2, day2: 4, day3: 1}
@@ -399,8 +424,9 @@ async function buildFunction4(data) {
         /*
             ealieest thing for each user
         */
+        // console.log(stat.userConnections[0].timestamp)
 
-        var userEarliest = getDayLayout(stat.userConnections[0].timestamp)
+        var userEarliest = getDayLayoutNew(stat.userConnections[0].timestamp)
         amountX[userEarliest] = amountX[userEarliest] ? amountX[userEarliest] + 1 : 1
         timestamps.push({userEarliest, timestamp: stat.userConnections[0].timestamp })
     }
@@ -415,6 +441,16 @@ async function buildFunction4(data) {
         borderColor: "rgba(255,0,0,0.5)",
         label: `First Connection of User`,
         data: [ ],
+    }
+
+    for (var i=10; i>-1; i--) {
+        const daysAgo = getTimeDaysAgo(i)
+        const layoutDate = getDayLayoutNew(daysAgo)
+
+        if (!amountX[layoutDate]){
+            amountX[layoutDate]=0
+            timestamps.push({userEarliest: layoutDate, timestamp: daysAgo})
+        }
     }
 
     for (const day in amountX) {

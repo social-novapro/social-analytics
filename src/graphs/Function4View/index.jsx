@@ -32,7 +32,7 @@ export default function Function4View({
                     }
                 }}
             />
-            <p>total connections: {chartData.functionNumber4.totalY}</p>
+            <p>total new users within timeframe: {chartData.functionNumber4.totalY}</p>
         </div>
     );
 }
