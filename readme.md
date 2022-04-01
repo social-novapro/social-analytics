@@ -1,11 +1,18 @@
 This is Interact Analytics created by Daniel Kravec
 
 # To build Docker Image:
+```
 docker build -t novapro/interact_analytics .
+```
 
 # To push image to registry:
+```
 docker tag novapro/interact_analytics registry.xnet.com:5000/novapro/interact_analytics:latest
+```
+
+```
 docker push registry.xnet.com:5000/novapro/interact_analytics
+```
 
 
 

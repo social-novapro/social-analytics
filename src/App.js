@@ -241,7 +241,7 @@ async function buildFunction2(data) {
                // console.log('to old')
             }
             else {
-                if (!dates[day]) dates[day] = {amount: 0, timeDate: getDateMonthDay(connection.timestamp)} 
+                if (!dates[day]) dates[day] = {amount: 1, timeDate: getDateMonthDay(connection.timestamp)} 
                 else dates[day].amount++
                 totalY++
             }
