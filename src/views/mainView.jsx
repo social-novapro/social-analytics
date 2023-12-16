@@ -30,6 +30,11 @@ export default function MainView({runtime}) {
                     <Link className='buttonStyled buttonsDesign' to="/4">First Connection of User</Link>
                     <p className='padding20'>This graph shows the first connection of each user</p>
                 </div>
+                <div>
+                    <Link className='buttonStyled buttonsDesign' to="/5">Users / Day</Link>
+                    <p className='padding20'>This graph shows the number of unique user connection each day</p>
+                </div>
+
             </div>
         </div>
     )
