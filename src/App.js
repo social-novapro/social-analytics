@@ -4,6 +4,7 @@ import Function1View from './graphs/Function1View';
 import Function2View from './graphs/Function2View';
 import Function3View from './graphs/Function3View';
 import Function4View from './graphs/Function4View';
+import Function5View from './graphs/Function5View';
 import { useEffect, useState } from "react";
 import stats from './stats.json'
 
@@ -30,12 +31,14 @@ function App() {
             const functionNumber2 = await buildFunction2(data);
             const functionNumber3 = await buildFunction3(data);
             const functionNumber4 = await buildFunction4(data);
+            const functionNumber5 = await buildFunction5(data);
 
             const functionData = {
                 functionNumber1,
                 functionNumber2,
                 functionNumber3,
                 functionNumber4,
+                functionNumber5,
                 ready: true
             }
 
@@ -60,6 +63,7 @@ function App() {
                     <Route path='/2' exact={ true } element={ <Function2View chartData={chartData}/> } />
                     <Route path='/3' exact={ true } element={ <Function3View chartData={chartData}/> } />
                     <Route path='/4' exact={ true } element={ <Function4View chartData={chartData}/> } />
+                    <Route path='/5' exact={ true } element={ <Function5View chartData={chartData}/> } />
                 </Routes>
             </div>
             
@@ -87,12 +91,12 @@ function getTime() {
     return currentTime;
 };
 
-function getTimeOneWeek() {
+function getTimeOneWeek(offset=0) {
     const d = new Date();
     const currentTime = d.getTime();
     
     const dateNowLayout = getDayLayout(currentTime)
-    const oneWeekAgoLayout = dateNowLayout - 7
+    const oneWeekAgoLayout = dateNowLayout - (7 + offset)
     return oneWeekAgoLayout
 };
 function getTimeDaysAgo(days) {
@@ -230,7 +234,7 @@ async function buildFunction2(data) {
             highesty = stat.userConnections.length
         };
 
-        const oneWeekAgoLayout = getTimeOneWeek()
+        const oneWeekAgoLayout = getTimeOneWeek(3)
 
         
         for (const connection of stat.userConnections) {
@@ -468,6 +472,90 @@ async function buildFunction4(data) {
         pointsYs,
         totalX,
         totalY,
+        xDomain: [lowestx, highestx],
+        yDomain: [lowesty, highesty],
+    }
+
+    return functionData;
+}
+
+// users per day
+async function buildFunction5(data) {
+    var pointsXs = [];
+    var pointsYs = [];
+
+    var totalX = 0
+    var totalY = 0
+    var functionPointsXandY =[];
+
+    var highestx = 0;
+    var lowestx = -1;
+    var highesty = 0;
+    var lowesty = -1;
+
+    // amount: users, timeDate
+    const users = []
+    var uniqueUsers = 0
+
+    for (const stat of data) {
+        if (highesty < stat.userConnections.length) {
+            highesty = stat.userConnections.length
+        };
+
+        const oneWeekAgoLayout = getTimeOneWeek(3)
+        const countedDates = []
+
+        var wasCounted = false
+        for (const connection of stat.userConnections) {
+            const day = getDayLayoutNew(connection.timestamp)
+
+            if (day <  oneWeekAgoLayout) {
+               // console.log(connection)
+               // console.log('to old')
+            }
+            else {
+                if (!countedDates[day]) {
+                    countedDates[day] = {amount: 1, timeDate: getDateMonthDay(connection.timestamp)} 
+                    if (!users[day]) {
+                        users[day] = {amount: 1, timeDate: getDateMonthDay(connection.timestamp)}
+                    } else {
+                        users[day].amount++
+                    }
+                    totalY++
+                }
+                if (!wasCounted) {
+                    uniqueUsers++
+                    wasCounted = true
+                } 
+            }
+        }
+    }
+
+    var datesAll = []
+
+    for (var i=10; i>-1; i--) {
+        const daysAgo = getTimeDaysAgo(i)
+        const layoutDate = getDayLayoutNew(daysAgo)
+        console.log(users[layoutDate])
+        if (!users[layoutDate]) datesAll[layoutDate] = {amount: 0, timeDate: getDateMonthDay(daysAgo)}
+        else datesAll[layoutDate] = users[layoutDate]
+        console.log(datesAll[layoutDate])
+    }
+
+    for (const date in datesAll) {
+        totalX++
+        pointsXs.push(`${datesAll[date].timeDate}: ${datesAll[date].amount}`)
+        pointsYs.push(datesAll[date].amount)
+        functionPointsXandY.push([datesAll[date].timeDate, datesAll[date].amount])
+    }
+  
+    var functionData = {
+        pointsXs,
+        pointsYs,
+        totalX,
+        totalY,
+        uniqueUsers,
+        points: functionPointsXandY,
         xDomain: [lowestx, highestx],
         yDomain: [lowesty, highesty],
     }
