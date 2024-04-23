@@ -8,40 +8,38 @@ import Function5View from './graphs/Function5View';
 import { useEffect, useState } from "react";
 import stats from './stats.json'
 
-const runtime = "prod" // "prod" || "dev" || "test"
+const runtime = "dev" // "prod" || "dev" || "test"
 
 function App() {
     useEffect(() => {
         const fetchPrices = async () => {
-            var data 
-            
-            if (runtime === "prod") {
-                const res = await fetch(`https://interact-api.novapro.net/v1/get/analyticTrend/`, { method: 'GET' })
-                data = await res.json();
+            var baseurl = "https://interact-api.novapro.net/v1/analytics/trend"
+            if (runtime === "dev") { 
+                baseurl = "http://localhost:5002/v1/analytics/trend"
             }
-            else if (runtime === "dev") {
-                const res = await fetch(`http://localhost:5002/v1/get/analyticTrend/`, { method: 'GET' })
-                data = await res.json();
-            }
-            else {
-                data = stats;
-            }
-        
-            const functionNumber1 = await buildFunction1(data);
-            const functionNumber2 = await buildFunction2(data);
-            const functionNumber3 = await buildFunction3(data);
-            const functionNumber4 = await buildFunction4(data);
-            const functionNumber5 = await buildFunction5(data);
 
+            // use /all later for functions 1-5
+
+            const res1 = await fetch(`${baseurl}`, { method: 'GET' })
+            const mainData = await res1.json();
+            const res2 = await fetch(`${baseurl}/1`, { method: 'GET' })
+            const function1Data = await res2.json();
+        
+            // const functionNumber1 = await buildFunction1(mainData);
+            const functionNumber2 = await buildFunction2(mainData);
+            const functionNumber3 = await buildFunction3(mainData);
+            const functionNumber4 = await buildFunction4(mainData);
+            const functionNumber5 = await buildFunction5(mainData);
+            
             const functionData = {
-                functionNumber1,
+                functionNumber1: function1Data,
                 functionNumber2,
                 functionNumber3,
                 functionNumber4,
                 functionNumber5,
                 ready: true
             }
-
+            
             setChartData(functionData);
         }
         fetchPrices();
@@ -166,53 +164,6 @@ functions
     x: overtime
     y: time since last connection
 */
-
-async function buildFunction1(data) {
-    var pointsXs = [];
-    var pointsYs = [];
-
-    var functionPointsXandY =[];
-
-    var totalX = 0
-    var totalY = 0
-
-    var highestx = 0;
-    var lowestx = -1;
-    var highesty = 0;
-    var lowesty = -1;
-
-    var users = 0;
-
-    for (const stat of data) {
-        users++;
-
-        functionPointsXandY.push([users, stat.userConnections.length+1])
-        pointsXs.push(`User ${users}: ${stat.userConnections.length+1}`)
-        pointsYs.push(stat.userConnections.length+1)
-
-        totalX++
-        totalY += stat.userConnections.length
-
-        highestx = users
-
-        if (highesty < stat.userConnections.length+1) {
-            highesty = stat.userConnections.length+1
-        };
-    }
-  
-    var functionData = {
-        pointsXs,
-        pointsYs,
-        totalX,
-        totalY,
-        points: functionPointsXandY,
-        xDomain: [lowestx, highestx],
-        yDomain: [lowesty, highesty],
-        ready: true
-    }
-
-    return functionData;
-}
 
 async function buildFunction2(data) {
     var pointsXs = [];
